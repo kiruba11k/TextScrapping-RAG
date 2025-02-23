@@ -17,7 +17,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Streamlit UI
 st.set_page_config(page_title="Web Scraper RAG", page_icon="🌍", layout="wide")
-st.title("🌍 Text Scraping & Retrieval-Augmented Generation (RAG) System")
+st.title(" Text Scraping RAG System")
 
 url = st.sidebar.text_input("Enter website URL:")
 query = st.text_input("Enter your query:")
