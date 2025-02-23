@@ -12,8 +12,9 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langgraph.graph import Graph
 from langgraph.checkpoint.memory import MemorySaver
 
-# Load API key
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+# Load API Key from Streamlit Secrets
+GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 
 # Streamlit UI
 st.set_page_config(page_title="Web Scraper RAG", page_icon="🌍", layout="wide")
