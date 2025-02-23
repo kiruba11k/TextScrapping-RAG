@@ -1,0 +1,15 @@
+streamlit
+langchain
+faiss-cpu
+openai
+tiktoken
+bs4
+requests
+langchain-community
+google-generativeai
+langchain_google_genai
+langchain_huggingface
+langchain_openai
+langchain-groq
+rank_bm25
+langgraph
