@@ -13,3 +13,4 @@ langchain_openai
 langchain-groq
 rank_bm25
 langgraph
+validators
