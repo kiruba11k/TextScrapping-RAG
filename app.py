@@ -69,7 +69,7 @@ def get_rag_response(query):
 
     # Ensure retrievers are available
     if "vector_db" not in st.session_state or "bm25_retriever" not in st.session_state:
-        st.error("👻 No retrievers found. Please scrape data first.")
+        st.error("👻 No retrievers found. Please scrape data first.Click the Sidebar icon on your Top Left")
         return "Error: No retrievers found."
 
     vector_db = st.session_state["vector_db"]
@@ -125,6 +125,6 @@ if query:
             st.write("**Query:**", query)
             st.write("**Result:**", response)
     else:
-        st.error("👻 No indexed data found. Scrape a website first.")
+        st.error("👻 No indexed data found. Scrape a website first.Click the Sidebar icon on your Top Left")
 
 st.sidebar.write("🫣 Built by [Kirubakaran](https://github.com/kiruba11k)")
