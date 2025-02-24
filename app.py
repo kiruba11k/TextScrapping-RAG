@@ -25,15 +25,25 @@ st.title("Text Scraping RAG System")
 # Layout Setup
 col1, col2 = st.columns([3, 1])
 
-# Chat history in the right sidebar
+# Chat history in right side bar
 st.sidebar.header("Chat History")
-if "chat_history" not in st.session_state:
-    st.session_state["chat_history"] = []
 
-for chat in st.session_state["chat_history"]:
-    with st.sidebar:
-        st.write(f"**You:** {chat['query']}")
-        st.write(f"**Bot:** {chat['response']}")
+# Make the chat history scrollable
+chat_container = st.sidebar.container()
+with chat_container:
+    if "chat_history" not in st.session_state:
+        st.session_state["chat_history"] = []
+
+    # compact design with separation
+    for chat in reversed(st.session_state["chat_history"]):
+        with st.container():
+            st.markdown(f"""
+                <div style="border: 1px solid #ddd; padding: 8px; margin-bottom: 5px; border-radius: 8px; background-color: #f7f7f7;">
+                    <strong style="color: #333;">You:</strong> {chat['query']}<br>
+                    <strong style="color: #007bff;">Bot:</strong> {chat['response']}
+                </div>
+            """, unsafe_allow_html=True)
+            
 
 with col1:
     url = st.text_input("Enter website URL:", key="url_input")
