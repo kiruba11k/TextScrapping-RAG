@@ -28,25 +28,19 @@ col1, col2 = st.columns([3, 1])
 # Chat history in right side bar
 st.sidebar.header("Chat History")
 
-# Make the chat history scrollable
-chat_container = st.sidebar.container()
-with chat_container:
-    if "chat_history" not in st.session_state:
-        st.session_state["chat_history"] = []
+if "chat_history" not in st.session_state:
+    st.session_state["chat_history"] = []
 
-    for chat in reversed(st.session_state["chat_history"]):
-        user_message = chat["query"].replace("\n", "<br>")
-        bot_message = chat["response"].replace("\n", "<br>")
-
-        with st.container():
-            st.markdown(f"""
-                <div style="border: 1px solid #ddd; padding: 8px; margin-bottom: 5px; 
-                            border-radius: 8px; background-color: #f7f7f7; word-wrap: break-word;">
-                    <strong style="color: #333;">You:</strong> {user_message}<br>
-                    <strong style="color: #007bff;">Bot:</strong> {bot_message}
-                </div>
-            """, unsafe_allow_html=True)
-            
+# Display chat history in reverse order (latest messages at top)
+for chat in reversed(st.session_state["chat_history"]):
+    with st.sidebar.expander(f"📜 {chat['query'][:30]}...", expanded=False):  # Expandable for better UI
+        st.markdown(f"""
+            <div style="border: 1px solid #ddd; padding: 8px; margin-bottom: 5px; 
+                        border-radius: 8px; background-color: #f7f7f7; word-wrap: break-word;">
+                <strong style="color: #333;">You:</strong> {chat["query"]}<br>
+                <strong style="color: #007bff;">Bot:</strong> {chat["response"]}
+            </div>
+        """, unsafe_allow_html=True)            
 
 with col1:
     url = st.text_input("Enter website URL:", key="url_input")
@@ -124,7 +118,9 @@ if query:
     if "vector_db" in st.session_state:
         with st.spinner("🧐 Searching relevant information..."):
             response = get_rag_response(query)
+            
             st.session_state.chat_history.append({"query": query, "response": response})
+
             
             with st.chat_message("user"):
                 st.write(query)
@@ -132,8 +128,7 @@ if query:
             with st.chat_message("assistant"):
                 st.write(response)
                         
-    
-            
+      
     else:
         st.error("👻 No indexed data found. Scrape a website first.")
 
