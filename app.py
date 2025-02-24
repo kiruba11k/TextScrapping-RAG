@@ -1,4 +1,5 @@
 import streamlit as st
+import re
 from langchain.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.chains import RetrievalQA
@@ -23,6 +24,12 @@ st.title(" Text Scraping RAG System")
 url = st.sidebar.text_input("Enter website URL:")
 query = st.text_input("Enter your query:")
 
+def is_valid_url(url):
+    pattern = re.compile(r'^(https?:\/\/)?'  # http:// or https://
+                         r'(([A-Za-z0-9-]+\.)+[A-Za-z]{2,6})'  # domain name
+                         r'(\/.*)?$', re.IGNORECASE)  # optional path
+    return bool(pattern.match(url))
+
 def clean_text(text):
     """Removes unwanted boilerplate content from scraped data."""
     unwanted_phrases = ["Privacy Policy", "Terms of Service", "Subscribe", "Contact Us", "Copyright"]
@@ -32,6 +39,10 @@ def clean_text(text):
 
 def scrape_and_process(url):
     """Scrapes data from the website, processes it, and indexes it in FAISS."""
+    if not is_valid_url(url):
+        st.warning("😡 ENTER PROPER URL")
+        return None, None
+    
     loader = WebBaseLoader(web_paths=(url,))
     docs = loader.load()
     
