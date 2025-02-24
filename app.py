@@ -17,7 +17,7 @@ GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 
 # Streamlit UI
-st.set_page_config(page_title="Web Scraper RAG", page_icon="🌍", layout="wide")
+st.set_page_config(page_title="Web Scraper RAG", page_icon="🤗", layout="wide")
 st.title(" Text Scraping RAG System")
 
 url = st.sidebar.text_input("Enter website URL:")
@@ -36,7 +36,7 @@ def scrape_and_process(url):
     docs = loader.load()
     
     if not docs:
-        st.error("❌ No data retrieved from the URL. Try another website.")
+        st.error("😣 No data retrieved from the URL. Try another website.")
         return None, None
     
     for doc in docs:
@@ -58,7 +58,7 @@ def scrape_and_process(url):
     # Store retrievers in session state
     st.session_state["vector_db"] = vector_db
     st.session_state["bm25_retriever"] = bm25_retriever
-    st.success("✅ Data successfully scraped and indexed!")
+    st.success(" Data successfully scraped and indexed!")
 
     return vector_db, bm25_retriever
 
@@ -69,7 +69,7 @@ def get_rag_response(query):
 
     # Ensure retrievers are available
     if "vector_db" not in st.session_state or "bm25_retriever" not in st.session_state:
-        st.error("⚠️ No retrievers found. Please scrape data first.")
+        st.error("👻 No retrievers found. Please scrape data first.")
         return "Error: No retrievers found."
 
     vector_db = st.session_state["vector_db"]
@@ -81,12 +81,12 @@ def get_rag_response(query):
 
     # If FAISS retrieval is empty, fall back to BM25 retrieval
     if not retrieved_docs:
-        st.warning("⚠️ No exact matches found in FAISS. Trying keyword-based retrieval...")
+        st.warning("👻 No exact matches found in FAISS. Trying keyword-based retrieval...")
         retrieved_docs = bm25_retriever.get_relevant_documents(query)
 
     # If still no results, use general LLM without retrieval
     if not retrieved_docs:
-        st.warning("⚠️ No relevant data found. Using general LLM response...")
+        st.warning("👻 No relevant data found. Using general LLM response...")
         llm = ChatGroq(model_name="Gemma2-9b-It")
         return llm.invoke(query)  # Direct LLM response
 
@@ -116,15 +116,15 @@ if st.sidebar.button("Scrape & Process"):
                 st.session_state["vector_db"] = vector_db
                 st.session_state["bm25_retriever"] = bm25_retriever
     else:
-        st.error("❌ Please enter a valid URL.")
+        st.error("😣 Please enter a valid URL.")
 
 if query:
     if "vector_db" in st.session_state:
-        with st.spinner("🔍 Searching relevant information..."):
+        with st.spinner("🧐 Searching relevant information..."):
             response = get_rag_response(query)
             st.write("**Query:**", query)
             st.write("**Result:**", response)
     else:
-        st.error("⚠️ No indexed data found. Scrape a website first.")
+        st.error("👻 No indexed data found. Scrape a website first.")
 
-st.sidebar.write("⚡ Built by [Kirubakaran](https://github.com/kiruba11k)")
+st.sidebar.write("🫣 Built by [Kirubakaran](https://github.com/kiruba11k)")
