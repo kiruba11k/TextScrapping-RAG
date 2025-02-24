@@ -34,7 +34,7 @@ for i, chat in enumerate(reversed(st.session_state["chat_history"])):
     query_escaped = html.escape(chat["query"])
     response_escaped = html.escape(chat["response"])
 
-    with st.sidebar.expander(f"📜 {query_escaped[:30]}...", expanded=False):
+    with st.sidebar.expander(f"📋 {query_escaped[:30]}...", expanded=False):
         st.markdown(f"""
             <div id="chat-{i}" style="border: 1px solid #ddd; padding: 8px; margin-bottom: 5px; 
                         border-radius: 8px; background-color: #f7f7f7; word-wrap: break-word;">
@@ -52,7 +52,7 @@ with col1:
     def scrape_and_process(url):
         """Scrapes and processes the website content for indexing."""
         if not is_valid_url(url):
-            st.warning("🚨 ENTER PROPER URL")
+            st.warning("😵 Enter the Proper URL")
             return None, None
 
         loader = WebBaseLoader(web_paths=(url,))
@@ -129,14 +129,10 @@ with col1:
     workflow.add_node("retriever", get_rag_response)
     workflow.add_node("router", route_llm)
 
-    # Define Workflow
+    # Workflow
     workflow.set_entry_point("scraper")
     workflow.add_edge("scraper", "retriever")
-
-    # Conditional Edge Handling
     workflow.add_conditional_edges("retriever", route_based_on_docs)
-
-    # Compile Workflow
     app = workflow.compile(checkpointer=memory)
 
     # Scrape & Process Button
