@@ -11,7 +11,4 @@ langchain-groq
 rank_bm25
 langgraph
 validators
-transformers
-torch
-sentence-transformers
-lxml
+
