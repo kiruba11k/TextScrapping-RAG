@@ -121,7 +121,7 @@ with col1:
 
     def route_based_on_docs(docs):
         """Determines next step based on retrieved documents."""
-        return "router" if docs else "llm"
+        return "router" if data and isinstance(data, list) and len(data) > 0 else "llm"
 
     # Graph Workflow
     memory = MemorySaver()
@@ -136,7 +136,7 @@ with col1:
     workflow.add_edge("scraper", "retriever")
 
     # Conditional Edge Handling
-    workflow.conditional_edges("retriever", lambda docs: "router" if docs else "llm")
+    workflow.conditional_edges("retriever", route_based_on_docs)
 
     # Compile Workflow
     app = workflow.compile(checkpointer=memory)
