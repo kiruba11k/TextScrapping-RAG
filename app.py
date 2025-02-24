@@ -97,6 +97,9 @@ with col1:
         st.session_state.chat_history.append({"query": query, "response": response})
         return response
 
+    def route_based_on_docs(docs):
+        return "router" if docs else "llm"
+        
     memory = MemorySaver()
     workflow = Graph()
     workflow.add_node("scraper", scrape_and_process)
@@ -105,7 +108,7 @@ with col1:
     
     workflow.set_entry_point("scraper")
     workflow.add_edge("scraper", "retriever")
-    workflow.conditional_edges("retriever", {lambda docs: bool(docs): "router"})
+    workflow.conditional_edges("retriever", route_based_on_docs)
     workflow.add_edge("retriever", "router")
     
     app = workflow.compile(checkpointer=memory)
