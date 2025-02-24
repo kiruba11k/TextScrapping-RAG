@@ -1,20 +1,30 @@
 import streamlit as st
 import validators
 from langchain.vectorstores import FAISS
-from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain.chains import RetrievalQA
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import WebBaseLoader
 from langchain.retrievers import BM25Retriever
 import os
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.llms import HuggingFacePipeline
+from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer
 from langgraph.graph import Graph
 from langgraph.checkpoint.memory import MemorySaver
 import html
 
-# Load Google API Key from Streamlit Secrets
-GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
-os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
+# Load Llama-2 Model
+model_name = "meta-llama/Llama-2-7b-chat-hf"
+
+@st.cache_resource
+def load_llm():
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto")
+    text_gen_pipeline = pipeline("text-generation", model=model, tokenizer=tokenizer, max_length=2048)
+    return HuggingFacePipeline(pipeline=text_gen_pipeline)
+
+llm = load_llm()
+
 
 # Streamlit UI
 st.set_page_config(page_title="Web Scraper RAG", page_icon="🤗", layout="wide")
@@ -103,16 +113,14 @@ with col1:
         return retrieved_docs
 
     def route_llm(query, retrieved_docs):
-        """Routes to the correct LLM if no relevant RAG content is found."""
-        google_llm = ChatGoogleGenerativeAI(model="gemini-1.0-pro")  # ✅ Updated to Gemini
-
+        """Routes to Llama-2 if no relevant RAG content is found."""
         if retrieved_docs:
             # Use RAG-based response
-            qa_chain = RetrievalQA.from_chain_type(google_llm, retriever=st.session_state["vector_db"].as_retriever())
+            qa_chain = RetrievalQA.from_chain_type(llm, retriever=st.session_state["vector_db"].as_retriever())
             response = qa_chain.run(query)
         else:
             # Use direct LLM if no retrieved content
-            response = google_llm.invoke(query)
+            response = llm(query)
 
         st.session_state.chat_history.append({"query": query, "response": response})
         return response
