@@ -1,21 +1,20 @@
 import streamlit as st
 import validators
 from langchain.vectorstores import FAISS
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain.chains import RetrievalQA
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import WebBaseLoader
 from langchain.retrievers import BM25Retriever
 import os
-from langchain_openai import ChatOpenAI
 from langchain_huggingface import HuggingFaceEmbeddings
 from langgraph.graph import Graph
 from langgraph.checkpoint.memory import MemorySaver
 import html
 
-# Load OpenAI API Key from Streamlit Secrets
-OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
-os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+# Load Google API Key from Streamlit Secrets
+GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
+os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 
 # Streamlit UI
 st.set_page_config(page_title="Web Scraper RAG", page_icon="🤗", layout="wide")
@@ -105,15 +104,15 @@ with col1:
 
     def route_llm(query, retrieved_docs):
         """Routes to the correct LLM if no relevant RAG content is found."""
-        openai_llm = ChatOpenAI(model_name="gpt-3.5-turbo")  #  "gpt-3.5-turbo"
+        google_llm = ChatGoogleGenerativeAI(model="gemini-1.0-pro")  # ✅ Updated to Gemini
 
         if retrieved_docs:
             # Use RAG-based response
-            qa_chain = RetrievalQA.from_chain_type(openai_llm, retriever=st.session_state["vector_db"].as_retriever())
+            qa_chain = RetrievalQA.from_chain_type(google_llm, retriever=st.session_state["vector_db"].as_retriever())
             response = qa_chain.run(query)
         else:
             # Use direct LLM if no retrieved content
-            response = openai_llm.invoke(query)
+            response = google_llm.invoke(query)
 
         st.session_state.chat_history.append({"query": query, "response": response})
         return response
