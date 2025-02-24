@@ -136,7 +136,7 @@ with col1:
     workflow.add_edge("scraper", "retriever")
 
     # Conditional Edge Handling
-    workflow.conditional_edges("retriever", route_based_on_docs)
+    workflow.add_conditional_edges("retriever", route_based_on_docs)
 
     # Compile Workflow
     app = workflow.compile(checkpointer=memory)
