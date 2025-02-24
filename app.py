@@ -24,14 +24,12 @@ st.title("Text Scraping RAG System")
 # Layout Setup
 col1, col2 = st.columns([3, 1])
 
-# Chat History in Right Sidebar
-with col2:
-    st.sidebar.header("Chat History")
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
-    for chat in st.session_state.chat_history:
-        st.sidebar.write(f"**You:** {chat['query']}")
-        st.sidebar.write(f"**Bot:** {chat['response']}")
+# Chat history in the right sidebar
+st.sidebar.header("Chat History")
+if "chat_history" not in st.session_state:
+    st.session_state["chat_history"] = []
+for chat in st.session_state["chat_history"]:
+    st.sidebar.write(chat)
 
 with col1:
     url = st.text_input("Enter website URL:", key="url_input")
@@ -102,14 +100,18 @@ with col1:
         else:
             st.error("😣 Please enter a valid URL.")
 
-    query = st.chat_input("Enter your query...")
-    if query:
-        if "vector_db" in st.session_state:
-            with st.spinner("🧐 Searching relevant information..."):
-                response = get_rag_response(query)
-                st.write("**Query:**", query)
-                st.write(response)
-        else:
-            st.error("👻 No indexed data found. Scrape a website first.")
 
+
+# Chat interface at the bottom
+query = st.chat_input("Enter your query:")
+if query:
+    if "vector_db" in st.session_state:
+        with st.spinner("🧐 Searching relevant information..."):
+            response = get_rag_response(query)
+            st.session_state["chat_history"].append(f"**You:** {query}")
+            st.session_state["chat_history"].append(f"**Bot:** {response}")
+            st.write("**Query:**", query)
+            st.write(response)
+    else:
+        st.error("👻 No indexed data found. Scrape a website first.")
 st.sidebar.write("🫣 Built by [Kirubakaran](https://github.com/kiruba11k)")
