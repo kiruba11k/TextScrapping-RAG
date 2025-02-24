@@ -1,5 +1,6 @@
 import streamlit as st
 import re
+import validators
 from langchain.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.chains import RetrievalQA
@@ -25,31 +26,28 @@ url = st.sidebar.text_input("Enter website URL:")
 query = st.text_input("Enter your query:")
 
 def is_valid_url(url):
-    pattern = re.compile(r'^(https?:\/\/)?'  # http:// or https://
-                         r'(([A-Za-z0-9-]+\.)+[A-Za-z]{2,6})'  # domain name
-                         r'(\/.*)?$', re.IGNORECASE)  # optional path
-    return bool(pattern.match(url))
-
-def clean_text(text):
-    """Removes unwanted boilerplate content from scraped data."""
-    unwanted_phrases = ["Privacy Policy", "Terms of Service", "Subscribe", "Contact Us", "Copyright"]
-    for phrase in unwanted_phrases:
-        text = text.replace(phrase, "")
-    return text.strip()
+    """Check if the URL is valid."""
+    return validators.url(url)
 
 def scrape_and_process(url):
     """Scrapes data from the website, processes it, and indexes it in FAISS."""
-    if not is_valid_url(url):
-        st.warning("😡 ENTER PROPER URL")
-        return None, None
     
+    if not is_valid_url(url):
+        st.warning("🚨 ENTER PROPER URL")
+        return None, None
+
     loader = WebBaseLoader(web_paths=(url,))
-    docs = loader.load()
+    
+    try:
+        docs = loader.load()
+    except requests.exceptions.MissingSchema:
+        st.error("❌ Invalid URL format. Please enter a proper URL.")
+        return None, None
     
     if not docs:
         st.error("😣 No data retrieved from the URL. Try another website.")
         return None, None
-    
+
     for doc in docs:
         doc.page_content = clean_text(doc.page_content)
         doc.metadata = {"source": url}
@@ -71,6 +69,7 @@ def scrape_and_process(url):
     st.session_state["bm25_retriever"] = bm25_retriever
     st.success("🤩 Data successfully scraped and indexed!")
 
+    return vector_db, bm25_retriever
     return vector_db, bm25_retriever
 
 def get_rag_response(query):
