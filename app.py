@@ -58,7 +58,7 @@ def scrape_and_process(url):
     # Store retrievers in session state
     st.session_state["vector_db"] = vector_db
     st.session_state["bm25_retriever"] = bm25_retriever
-    st.success(" Data successfully scraped and indexed!")
+    st.success("🤩 Data successfully scraped and indexed!")
 
     return vector_db, bm25_retriever
 
