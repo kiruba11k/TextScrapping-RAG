@@ -84,16 +84,16 @@ with col1:
         retriever = vector_db.as_retriever()
         retrieved_docs = retriever.get_relevant_documents(query)
         if not retrieved_docs:
-            st.warning("👻 No exact matches found in FAISS. Trying keyword-based retrieval...")
             retrieved_docs = bm25_retriever.get_relevant_documents(query)
+        return retrieved_docs
+
+    def route_llm(query, retrieved_docs):
+        llm = ChatGroq(model_name="Gemma2-9b-It")
         if retrieved_docs:
-            llm = ChatGroq(model_name="Gemma2-9b-It")
-            qa_chain = RetrievalQA.from_chain_type(llm, retriever=retriever)
+            qa_chain = RetrievalQA.from_chain_type(llm, retriever=st.session_state["vector_db"].as_retriever())
             response = qa_chain.run(query)
         else:
-            llm = ChatGroq(model_name="Gemma2-9b-It")
             response = llm.invoke(query)
-        
         st.session_state.chat_history.append({"query": query, "response": response})
         return response
 
@@ -101,8 +101,13 @@ with col1:
     workflow = Graph()
     workflow.add_node("scraper", scrape_and_process)
     workflow.add_node("retriever", get_rag_response)
+    workflow.add_node("router", route_llm)
+    
     workflow.set_entry_point("scraper")
     workflow.add_edge("scraper", "retriever")
+    workflow.conditional_edges("retriever", {lambda docs: bool(docs): "router"})
+    workflow.add_edge("retriever", "router")
+    
     app = workflow.compile(checkpointer=memory)
 
     if st.button("Scrape & Process"):
