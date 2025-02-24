@@ -1,5 +1,4 @@
 import streamlit as st
-import re
 import validators
 from langchain.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
