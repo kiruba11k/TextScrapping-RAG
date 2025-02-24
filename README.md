@@ -16,6 +16,7 @@ This project is a **Text Scraping RAG System** that allows users to scrape text 
   - Uses `ChatGroq` (Gemma2-9b-It) to generate responses.
   - Supports fallback to direct LLM query when retrieval fails.
 - **Memory Checkpointing**: Implements `MemorySaver` to store session data.
+- **Graph-based Workflow:** Uses LangGraph to manage workflow execution `dynamically`.
 
 ## 📂 Project Structure
 ```
@@ -61,6 +62,30 @@ This project is a **Text Scraping RAG System** that allows users to scrape text 
    - **FAISS Retriever** searches for similar embeddings.
    - If FAISS fails, **BM25 Retriever** is used.
    - If both fail, **LLM fallback** generates a response.
+     
+4.  **Workflow Execution with LangGraph**
+
+- **Graph-based Execution:** Uses LangGraph to manage execution paths dynamically.
+
+- **Memory Management:** Implements MemorySaver to track execution history.
+
+- **Routing Logic:**
+  
+    - If data is retrieved, route to RAG pipeline.
+
+    - If no relevant data, route directly to LLM.
+      
+- **Graph Nodes:**
+  
+    - scraper: Loads and processes web data.
+      
+    -  retriever: Fetches relevant documents using FAISS and BM25.
+      
+    - router: Routes to either retrieval-based or LLM-based response generation.
+
+
+
+📂
 
 ## 📡 Running the Application
 To launch the Streamlit app:
