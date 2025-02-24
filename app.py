@@ -97,7 +97,12 @@ workflow = Graph()
 workflow.add_node("scraper", scrape_and_process)
 workflow.add_node("retriever", get_rag_response)
 workflow.set_entry_point("scraper")
-workflow.add_edge("scraper", "retriever")
+
+# Conditional Edge: Only proceed to retriever if scraping succeeds
+workflow.add_conditional_edges("scraper", {
+    "retriever": lambda output: output[0] is not None
+})
+
 app = workflow.compile(checkpointer=memory)
 
 if st.sidebar.button("Scrape & Process"):
