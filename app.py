@@ -13,7 +13,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langgraph.graph import Graph
 from langgraph.checkpoint.memory import MemorySaver
 import time
-
+import html
 # Load API Key from Streamlit Secrets
 GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 os.environ["GROQ_API_KEY"] = GROQ_API_KEY
@@ -32,15 +32,18 @@ if "chat_history" not in st.session_state:
     st.session_state["chat_history"] = []
 
 # Display chat history in reverse order (latest messages at top)
-for chat in reversed(st.session_state["chat_history"]):
-    with st.sidebar.expander(f"📜 {chat['query'][:30]}...", expanded=False):  # Expandable for better UI
+for i, chat in enumerate(reversed(st.session_state["chat_history"])):
+    query_escaped = html.escape(chat["query"])
+    response_escaped = html.escape(chat["response"])
+
+    with st.sidebar.expander(f"📜 {query_escaped[:30]}...", expanded=False):  # Expandable for better UI
         st.markdown(f"""
-            <div style="border: 1px solid #ddd; padding: 8px; margin-bottom: 5px; 
+            <div id="chat-{i}" style="border: 1px solid #ddd; padding: 8px; margin-bottom: 5px; 
                         border-radius: 8px; background-color: #f7f7f7; word-wrap: break-word;">
-                <strong style="color: #333;">You:</strong> {chat["query"]}<br>
-                <strong style="color: #007bff;">Bot:</strong> {chat["response"]}
+                <strong style="color: #333;">You:</strong> {query_escaped}<br>
+                <strong style="color: #007bff;">Bot:</strong> {response_escaped}
             </div>
-        """, unsafe_allow_html=True)            
+        """, unsafe_allow_html=True)          
 
 with col1:
     url = st.text_input("Enter website URL:", key="url_input")
@@ -119,16 +122,14 @@ if query:
         with st.spinner("🧐 Searching relevant information..."):
             response = get_rag_response(query)
             
-            st.session_state.chat_history.append({"query": query, "response": response})
+            if not any(chat["query"] == query and chat["response"] == response for chat in st.session_state.chat_history):
+                st.session_state.chat_history.append({"query": query, "response": response})
 
-            
             with st.chat_message("user"):
                 st.write(query)
             
             with st.chat_message("assistant"):
                 st.write(response)
-                        
-      
     else:
         st.error("👻 No indexed data found. Scrape a website first.")
 
