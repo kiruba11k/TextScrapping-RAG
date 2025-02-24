@@ -6,25 +6,15 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import WebBaseLoader
 from langchain.retrievers import BM25Retriever
 import os
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.llms import HuggingFacePipeline
-from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer
+from langchain_groq import ChatGroq
+from langchain_huggingface import HuggingFaceEmbeddings
 from langgraph.graph import Graph
 from langgraph.checkpoint.memory import MemorySaver
 import html
 
-# Load Llama-2 Model
-model_name = "meta-llama/Llama-2-7b-chat-hf"
-
-@st.cache_resource
-def load_llm():
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto")
-    text_gen_pipeline = pipeline("text-generation", model=model, tokenizer=tokenizer, max_length=2048)
-    return HuggingFacePipeline(pipeline=text_gen_pipeline)
-
-llm = load_llm()
-
+# Load API Key from Streamlit Secrets
+GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 
 # Streamlit UI
 st.set_page_config(page_title="Web Scraper RAG", page_icon="🤗", layout="wide")
@@ -113,21 +103,23 @@ with col1:
         return retrieved_docs
 
     def route_llm(query, retrieved_docs):
-        """Routes to Llama-2 if no relevant RAG content is found."""
+        """Routes to the correct LLM if no relevant RAG content is found."""
+        groq_llm = ChatGroq(model_name="Gemma2-9b-It")
+
         if retrieved_docs:
             # Use RAG-based response
-            qa_chain = RetrievalQA.from_chain_type(llm, retriever=st.session_state["vector_db"].as_retriever())
+            qa_chain = RetrievalQA.from_chain_type(groq_llm, retriever=st.session_state["vector_db"].as_retriever())
             response = qa_chain.run(query)
         else:
             # Use direct LLM if no retrieved content
-            response = llm(query)
+            response = groq_llm.invoke(query)
 
         st.session_state.chat_history.append({"query": query, "response": response})
         return response
 
     def route_based_on_docs(docs):
         """Determines next step based on retrieved documents."""
-        return "router" if docs and isinstance(docs, list) and len(docs) > 0 else "llm"
+        return "router" if data and isinstance(data, list) and len(data) > 0 else "llm"
 
     # Graph Workflow
     memory = MemorySaver()
