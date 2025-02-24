@@ -117,9 +117,10 @@ if query:
                 st.write(query)
             
             with st.chat_message("assistant"):
-                for char in response:
-                    st.write(char, end="", flush=True)
-                    time.sleep(0.02)  # Typing effect simulation
+                st.write(response)
+                        
+    
+            
     else:
         st.error("👻 No indexed data found. Scrape a website first.")
 
