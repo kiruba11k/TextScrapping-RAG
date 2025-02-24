@@ -34,13 +34,16 @@ with chat_container:
     if "chat_history" not in st.session_state:
         st.session_state["chat_history"] = []
 
-    # compact design with separation
     for chat in reversed(st.session_state["chat_history"]):
+        user_message = chat["query"].replace("\n", "<br>")
+        bot_message = chat["response"].replace("\n", "<br>")
+
         with st.container():
             st.markdown(f"""
-                <div style="border: 1px solid #ddd; padding: 8px; margin-bottom: 5px; border-radius: 8px; background-color: #f7f7f7;">
-                    <strong style="color: #333;">You:</strong> {chat['query']}<br>
-                    <strong style="color: #007bff;">Bot:</strong> {chat['response']}
+                <div style="border: 1px solid #ddd; padding: 8px; margin-bottom: 5px; 
+                            border-radius: 8px; background-color: #f7f7f7; word-wrap: break-word;">
+                    <strong style="color: #333;">You:</strong> {user_message}<br>
+                    <strong style="color: #007bff;">Bot:</strong> {bot_message}
                 </div>
             """, unsafe_allow_html=True)
             
