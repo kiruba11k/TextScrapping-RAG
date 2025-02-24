@@ -40,8 +40,7 @@ with chat_container:
             st.markdown(f"""
                 <div style="border: 1px solid #ddd; padding: 8px; margin-bottom: 5px; border-radius: 8px; background-color: #f7f7f7;">
                     <strong style="color: #333;">You:</strong> {chat['query']}<br>
-                    <strong style="color: #007bff;">Bot:</strong> {chat['response']}
-                </div>""", unsafe_allow_html=True)
+                    <strong style="color: #007bff;">Bot:</strong> {chat['response']}""", unsafe_allow_html=True)
             
 
 with col1:
