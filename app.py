@@ -1,5 +1,4 @@
 import streamlit as st
-import os
 import validators
 from langchain.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -7,35 +6,27 @@ from langchain.chains import RetrievalQA
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import WebBaseLoader
 from langchain.retrievers import BM25Retriever
+import os
 from langchain_openai import ChatOpenAI
 from langchain_groq import ChatGroq
 from langchain_huggingface import HuggingFaceEmbeddings
 from langgraph.graph import Graph
 from langgraph.checkpoint.memory import MemorySaver
 
-# Load API Key from Streamlit Secrets
-GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
-os.environ["GROQ_API_KEY"] = GROQ_API_KEY
-
-# Streamlit UI
-st.set_page_config(page_title="Web Scraper RAG", page_icon="🤗", layout="wide")
-st.title("Text Scraping RAG System")
-
-url = st.sidebar.text_input("Enter website URL:")
-query = st.text_input("Enter your query:")
-
 def is_valid_url(url):
-    """Check if the URL is valid."""
     return validators.url(url)
 
 def scrape_and_process(url):
-    """Scrapes data from the website, processes it, and indexes it in FAISS."""
     if not is_valid_url(url):
         st.warning("🚨 ENTER PROPER URL")
         return None, None
-
+    
     loader = WebBaseLoader(web_paths=(url,))
-    docs = loader.load()
+    try:
+        docs = loader.load()
+    except Exception:
+        st.error("❌ Invalid URL format. Please enter a proper URL.")
+        return None, None
     
     if not docs:
         st.error("😣 No data retrieved from the URL. Try another website.")
@@ -43,50 +34,52 @@ def scrape_and_process(url):
 
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=150)
     texts = text_splitter.split_documents(docs)
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/multi-qa-MiniLM-L6-cos-v1")
 
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/multi-qa-MiniLM-L6-cos-v1")
     vector_db = FAISS.from_documents(texts, embeddings)
     vector_db.save_local("faiss_index")
+
     bm25_retriever = BM25Retriever.from_documents(texts)
 
     st.session_state["vector_db"] = vector_db
     st.session_state["bm25_retriever"] = bm25_retriever
     st.success("🤩 Data successfully scraped and indexed!")
-
+    
     return vector_db, bm25_retriever
 
-def retrieve_docs(query):
-    """Retrieves relevant documents from FAISS or BM25."""
-    vector_db = st.session_state.get("vector_db")
-    bm25_retriever = st.session_state.get("bm25_retriever")
-    
-    if not vector_db or not bm25_retriever:
-        return None, "👻 No retrievers found. Please scrape data first."
-    
+def retrieve_or_fallback(query):
+    if "vector_db" not in st.session_state or "bm25_retriever" not in st.session_state:
+        return {"response": "No indexed data found. Scrape a website first.", "source": "None"}
+
+    vector_db = st.session_state["vector_db"]
+    bm25_retriever = st.session_state["bm25_retriever"]
+
     retriever = vector_db.as_retriever()
     retrieved_docs = retriever.get_relevant_documents(query)
     
     if not retrieved_docs:
         retrieved_docs = bm25_retriever.get_relevant_documents(query)
+
+    if not retrieved_docs:
+        return {"response": None, "source": "LLM"}  # Signal to use LLM fallback
     
-    return retrieved_docs, None
+    return {"response": retrieved_docs[0].page_content, "source": "RAG"}
 
-def generate_llm_response(query):
-    """Generates a response using LLM when no relevant documents are found."""
+def llm_generate(query):
     llm = ChatGroq(model_name="Gemma2-9b-It")
-    return llm.invoke(query)
+    response = llm.invoke(query)
+    return {"response": response, "source": "LLM"}
 
-# Define workflow with conditional edges
 memory = MemorySaver()
 workflow = Graph()
 workflow.add_node("scraper", scrape_and_process)
-workflow.add_node("retriever", retrieve_docs)
-workflow.add_node("llm", generate_llm_response)
+workflow.add_node("retriever", retrieve_or_fallback)
+workflow.add_node("llm", llm_generate)
 
-# Conditional edges: Use RAG if possible, otherwise fallback to LLM
+workflow.set_entry_point("scraper")
 workflow.add_edge("scraper", "retriever")
-workflow.add_conditional_edges("retriever", lambda data: "llm" if not data[0] else None)
-workflow.add_edge("llm", None)  # LLM final response
+workflow.add_conditional_edges("retriever", lambda x: "llm" if x["response"] is None else None)
+workflow.add_edge("llm", "retriever")  # Fallback loop
 
 app = workflow.compile(checkpointer=memory)
 
