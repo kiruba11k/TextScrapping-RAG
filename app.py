@@ -21,11 +21,19 @@ os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 st.set_page_config(page_title="Web Scraper RAG", page_icon="🤗", layout="wide")
 st.title("Text Scraping RAG System")
 
-col1, col2 = st.columns([2, 1])  # Main content on the left, chat history on the right
+col1, col2 = st.columns([3, 1])
 
 with col1:
-    url = st.sidebar.text_input("Enter website URL:")
-    query = st.text_input("Enter your query:")
+    st.subheader("Chat Interface")
+    chat_container = st.container()
+    query = st.text_input("Enter your query:", key="chat_input", placeholder="Type a message...")
+
+with col2:
+    st.sidebar.subheader("Chat History")
+    if "chat_history" not in st.session_state:
+        st.session_state["chat_history"] = []
+    for chat in st.session_state["chat_history"]:
+        st.sidebar.write(chat)
 
 def is_valid_url(url):
     """Check if the URL is valid."""
@@ -91,11 +99,7 @@ def get_rag_response(query):
         llm = ChatGroq(model_name="Gemma2-9b-It")
         response = llm.invoke(query)
 
-    # Store chat history
-    if "chat_history" not in st.session_state:
-        st.session_state["chat_history"] = []
-    st.session_state["chat_history"].append((query, response))
-    
+    st.session_state["chat_history"].append(f"**Query:** {query}\n**Response:** {response}")
     return response
 
 memory = MemorySaver()
@@ -106,6 +110,7 @@ workflow.set_entry_point("scraper")
 workflow.add_edge("scraper", "retriever")
 app = workflow.compile(checkpointer=memory)
 
+url = st.sidebar.text_input("Enter website URL:")
 if st.sidebar.button("Scrape & Process"):
     if url:
         with st.spinner("Scraping and indexing data..."):
@@ -120,17 +125,9 @@ if query:
     if "vector_db" in st.session_state:
         with st.spinner("🧐 Searching relevant information..."):
             response = get_rag_response(query)
-            st.write("**Query:**", query)
-            st.write(response)
+            chat_container.write(f"**You:** {query}")
+            chat_container.write(f"**Bot:** {response}")
     else:
         st.error("👻 No indexed data found. Scrape a website first.")
-
-with col2:
-    st.subheader("Chat History")
-    if "chat_history" in st.session_state:
-        for q, r in reversed(st.session_state["chat_history"]):
-            st.write(f"**Q:** {q}")
-            st.write(f"**A:** {r}")
-            st.markdown("---")
 
 st.sidebar.write("🫣 Built by [Kirubakaran](https://github.com/kiruba11k)")
