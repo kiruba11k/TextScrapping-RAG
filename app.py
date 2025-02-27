@@ -103,21 +103,22 @@ with col1:
         return retrieved_docs
 
     def route_llm(query, retrieved_docs):
-        """Routes to the correct LLM if no relevant RAG content is found."""
+    """Routes to the correct LLM if no relevant RAG content is found."""
         groq_llm = ChatGroq(model_name="Gemma2-9b-It")
 
         if retrieved_docs:
-            # Use RAG-based response
+        # Use RAG-based response
             qa_chain = RetrievalQA.from_chain_type(groq_llm, retriever=st.session_state["vector_db"].as_retriever())
             response = qa_chain.run(query)
         else:
-            # Use direct LLM if no retrieved content
+        # Use direct LLM if no retrieved content
             response = groq_llm.invoke(query)
             if "does not contain the answer" in response.lower():
                 response = groq_llm.invoke(f"Answer this without RAG: {query}")
+
         st.session_state.chat_history.append({"query": query, "response": response})
         return response
-
+    
     def route_based_on_docs(docs):
         """Determines next step based on retrieved documents."""
         return "router" if docs and isinstance(docs, list) and len(docs) > 0 else "llm"
