@@ -119,7 +119,7 @@ with col1:
 
     def route_based_on_docs(docs):
         """Determines next step based on retrieved documents."""
-        return "router" if data and isinstance(data, list) and len(data) > 0 else "llm"
+        return "router" if docs and isinstance(docs, list) and len(docs) > 0 else "llm"
 
     # Graph Workflow
     memory = MemorySaver()
