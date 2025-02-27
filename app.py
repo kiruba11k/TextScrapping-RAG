@@ -17,7 +17,7 @@ GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 
 # Streamlit UI
-st.set_page_config(page_title="Web Scraper RAG", page_icon="🤗", layout="wide")
+st.set_page_config(page_title="Text Scraper RAG", page_icon="🤗", layout="wide")
 st.title("Text Scraping RAG System")
 
 # Layout Setup
