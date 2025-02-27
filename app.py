@@ -113,7 +113,8 @@ with col1:
         else:
             # Use direct LLM if no retrieved content
             response = groq_llm.invoke(query)
-
+            if "does not contain the answer" in response.lower():
+                response = groq_llm.invoke(f"Answer this without RAG: {query}")
         st.session_state.chat_history.append({"query": query, "response": response})
         return response
 
