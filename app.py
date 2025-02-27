@@ -105,44 +105,22 @@ with col1:
         return retrieved_docs
 
     def route_llm(query, retrieved_docs):
-        """Routes the query through Conversational RAG if docs exist, otherwise calls Groq LLM."""
-
+        """Routes to the correct LLM if no relevant RAG content is found."""
         groq_llm = ChatGroq(model_name="Gemma2-9b-It")
 
-    # Initialize retriever if we have retrieved docs
         if retrieved_docs:
-            retriever = st.session_state["vector_db"].as_retriever()
-
-        # Ensure the retrieval chain is correctly initialized
-            qa_chain = ConversationalRetrievalChain.from_llm(
-                groq_llm,
-                retriever=retriever,
-                return_source_documents=False  # Avoid unexpected output formats
-            )
-
-        # Correctly invoke the chain with expected input format
-            response = qa_chain.invoke({
-                "question": query,
-                "chat_history": []  
-        })
-
-        # Ensure response is handled properly
-            if isinstance(response, dict) and "answer" in response:
-                response = response["answer"]
-    
+            # RAG based response
+            qa_chain = RetrievalQA.from_chain_type(groq_llm, retriever=st.session_state["vector_db"].as_retriever())
+            response = qa_chain.run(query)
         else:
-            # If no retrieved docs, call Groq LLM directly
+            # direct LLM if no retrieved content
             response = groq_llm.invoke(query)
+            if "does not contain the answer" in response.lower():
+                response = groq_llm.invoke(f"Answer this without RAG: {query}")
 
-    # Ensure response is a string
-        response = str(response) if response else "I'm unable to process this request."
-
-    # Store in chat history
         st.session_state.chat_history.append({"query": query, "response": response})
-
         return response
 
-    
     def route_based_on_docs(docs):
         """Determines next step based on retrieved documents."""
         return "router" if docs and isinstance(docs, list) and len(docs) > 0 else "llm"
