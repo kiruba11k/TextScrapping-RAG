@@ -2,6 +2,8 @@ import streamlit as st
 import validators
 from langchain.vectorstores import FAISS
 from langchain.chains import RetrievalQA
+from langchain.chains import ConversationalRetrievalChain
+
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import WebBaseLoader
 from langchain.retrievers import BM25Retriever
@@ -108,10 +110,11 @@ with col1:
 
         if retrieved_docs:
         # Use RAG-based response
-            qa_chain = RetrievalQA.from_chain_type(groq_llm, retriever=st.session_state["vector_db"].as_retriever())
+            qa_chain = ConversationalRetrievalChain.from_llm(groq_llm,retriever=st.session_state["vector_db"].as_retriever(),return_source_documents=True)
             response = qa_chain.run(query)
         else:
         # Use direct LLM if no retrieved content
+            
             response = groq_llm.invoke(query)
             if "does not contain the answer" in response.lower():
                 response = groq_llm.invoke(f"Answer this without RAG: {query}")
