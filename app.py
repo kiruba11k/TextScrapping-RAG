@@ -105,22 +105,43 @@ with col1:
         return retrieved_docs
 
     def route_llm(query, retrieved_docs):
-        """Routes to the correct LLM if no relevant RAG content is found."""
+        """Routes the query through Conversational RAG if docs exist, otherwise calls Groq LLM."""
+
         groq_llm = ChatGroq(model_name="Gemma2-9b-It")
 
+    # Initialize retriever if we have retrieved docs
         if retrieved_docs:
-        # Use RAG-based response
-            qa_chain = ConversationalRetrievalChain.from_llm(groq_llm,retriever=st.session_state["vector_db"].as_retriever(),return_source_documents=True)
-            response = qa_chain.run(query)
-        else:
-        # Use direct LLM if no retrieved content
-            
-            response = groq_llm.invoke(query)
-            if "does not contain the answer" in response.lower():
-                response = groq_llm.invoke(f"Answer this without RAG: {query}")
+            retriever = st.session_state["vector_db"].as_retriever()
 
+        # Ensure the retrieval chain is correctly initialized
+            qa_chain = ConversationalRetrievalChain.from_llm(
+                groq_llm,
+                retriever=retriever,
+                return_source_documents=False  # Avoid unexpected output formats
+            )
+
+        # Correctly invoke the chain with expected input format
+            response = qa_chain.invoke({
+                "question": query,
+                "chat_history": []  
+        })
+
+        # Ensure response is handled properly
+            if isinstance(response, dict) and "answer" in response:
+                response = response["answer"]
+    
+        else:
+            # If no retrieved docs, call Groq LLM directly
+            response = groq_llm.invoke(query)
+
+    # Ensure response is a string
+        response = str(response) if response else "I'm unable to process this request."
+
+    # Store in chat history
         st.session_state.chat_history.append({"query": query, "response": response})
+
         return response
+
     
     def route_based_on_docs(docs):
         """Determines next step based on retrieved documents."""
