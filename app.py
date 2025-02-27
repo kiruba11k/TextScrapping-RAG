@@ -103,7 +103,7 @@ with col1:
         return retrieved_docs
 
     def route_llm(query, retrieved_docs):
-    """Routes to the correct LLM if no relevant RAG content is found."""
+        """Routes to the correct LLM if no relevant RAG content is found."""
         groq_llm = ChatGroq(model_name="Gemma2-9b-It")
 
         if retrieved_docs:
